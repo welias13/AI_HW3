@@ -1,24 +1,30 @@
-
-#===============================================================================
+# ===============================================================================
 # Imports
-#===============================================================================
+# ===============================================================================
 
 import abstract
 from utils import MiniMaxWithAlphaBetaPruning, INFINITY, run_with_limited_time, ExceededTimeError
-from checkers.consts import EM, PAWN_COLOR, KING_COLOR, OPPONENT_COLOR, MAX_TURNS_NO_JUMP
+# from checkers.consts import EM, PAWN_COLOR, KING_COLOR, OPPONENT_COLOR, MAX_TURNS_NO_JUMP, RP, BP
 import time
 from collections import defaultdict
 
-#===============================================================================
+##
+import copy
+from checkers.consts import *
+
+from checkers.moves import TOOL_CAPTURE_MOVES
+
+# ===============================================================================
 # Globals
-#===============================================================================
+# ===============================================================================
 
 PAWN_WEIGHT = 1
 KING_WEIGHT = 1.5
 
-#===============================================================================
+
+# ===============================================================================
 # Player
-#===============================================================================
+# ===============================================================================
 
 class Player(abstract.AbstractPlayer):
     def __init__(self, setup_time, player_color, time_per_k_turns, k):
@@ -42,16 +48,16 @@ class Player(abstract.AbstractPlayer):
 
         # Choosing an arbitrary move in case Minimax does not return an answer:
         best_move = possible_moves[0]
-        
+
         # Initialize Minimax algorithm, still not running anything
-        minimax = MiniMaxWithAlphaBetaPruning(self.utility, self.color, self.no_more_time, 
+        minimax = MiniMaxWithAlphaBetaPruning(self.utility, self.color, self.no_more_time,
                                               self.selective_deepening_criterion)
 
         # Iterative deepening until the time runs out.
         while True:
-            
+
             print('going to depth: {}, remaining time: {}, prev_alpha: {}, best_move: {}'.format(
-                current_depth, 
+                current_depth,
                 self.time_for_current_move - (time.process_time() - self.clock),
                 prev_alpha,
                 best_move))
@@ -99,12 +105,12 @@ class Player(abstract.AbstractPlayer):
         for loc_val in state.board.values():
             if loc_val != EM:
                 piece_counts[loc_val] += 1
-        
+
         opponent_color = OPPONENT_COLOR[self.color]
-        
-        my_u = ((PAWN_WEIGHT * piece_counts[PAWN_COLOR[self.color]]) + 
+
+        my_u = ((PAWN_WEIGHT * piece_counts[PAWN_COLOR[self.color]]) +
                 (KING_WEIGHT * piece_counts[KING_COLOR[self.color]]))
-        op_u = ((PAWN_WEIGHT * piece_counts[PAWN_COLOR[opponent_color]]) + 
+        op_u = ((PAWN_WEIGHT * piece_counts[PAWN_COLOR[opponent_color]]) +
                 (KING_WEIGHT * piece_counts[KING_COLOR[opponent_color]]))
         if my_u == 0:
             # I have no tools left
@@ -112,9 +118,65 @@ class Player(abstract.AbstractPlayer):
         elif op_u == 0:
             # The opponent has no tools left
             return INFINITY
-        else:
-            return my_u - op_u
-        
+
+        basic_heuristic = my_u - op_u
+
+        opponent_state = copy.deepcopy(state)
+        opponent_state.curr_player = opponent_color
+
+        # considering threats for both players
+        current_player_possible_moves = state.get_possible_moves()
+        opponent_player_possible_moves = opponent_state.get_possible_moves()
+        current_player_threats = state.calc_capture_moves()
+        opponent_player_threats = opponent_state.calc_capture_moves()
+        # current_jumps_count = 0
+        # opponent_jumps_count = 0
+        # for game_move in current_player_possible_moves:
+        #     if game_move.jumped_locs:
+        #         current_jumps_count += len(game_move.jumped_locs)
+        # for game_move in opponent_player_possible_moves:
+        #     if game_move.jumped_locs:
+        #         opponent_jumps_count += len(game_move.jumped_locs)
+        # threat_heuristic = current_jumps_count - opponent_jumps_count
+        threat_heuristic = len(current_player_threats) - len(opponent_player_threats)
+
+        # considering available single moves for both players
+        # current_player_single_moves = state.calc_single_moves()
+        # opponent_player_single_moves = opponent_state.calc_single_moves()
+        # single_moves_heuristic = len(current_player_single_moves) - len(opponent_player_single_moves)
+
+        # considering distance of soon to be kings pawns for both players
+        current_player_princes_avg = 0.0
+        current_player_princes_count = 0
+        opponent_player_princes_avg = 0.0
+        opponent_player_princes_count = 0
+        for (i, j), loc_val in state.board.items():
+            if loc_val == RP and BOARD_ROWS - i < 5:
+                if PAWN_COLOR[self.color] == RP:
+                    current_player_princes_avg = (current_player_princes_avg * current_player_princes_count + i - 3) / (
+                        current_player_princes_count + 1)
+                    current_player_princes_count += 1
+
+                else:
+                    opponent_player_princes_avg = (
+                                                      opponent_player_princes_avg * opponent_player_princes_count + i - 3) / (
+                                                      opponent_player_princes_count + 1)
+                    opponent_player_princes_count += 1
+            if loc_val == BP and BOARD_ROWS - i > 4:
+                if PAWN_COLOR[self.color] == BP:
+                    current_player_princes_avg = (current_player_princes_avg * current_player_princes_count + 4 - i) / (
+                        current_player_princes_count + 1)
+                    current_player_princes_count += 1
+                else:
+                    opponent_player_princes_avg = (
+                                                      opponent_player_princes_avg * opponent_player_princes_count + 4 - i) / (
+                                                      opponent_player_princes_count + 1)
+                    opponent_player_princes_count += 1
+
+        dominance_heuristic = current_player_princes_avg - opponent_player_princes_avg
+
+        return basic_heuristic
+
     def selective_deepening_criterion(self, state):
         # Simple player does not selectively deepen into certain nodes.
         return False
