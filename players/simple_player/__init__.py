@@ -1,30 +1,24 @@
-# ===============================================================================
+
+#===============================================================================
 # Imports
-# ===============================================================================
+#===============================================================================
 
 import abstract
 from utils import MiniMaxWithAlphaBetaPruning, INFINITY, run_with_limited_time, ExceededTimeError
-# from checkers.consts import EM, PAWN_COLOR, KING_COLOR, OPPONENT_COLOR, MAX_TURNS_NO_JUMP, RP, BP
+from checkers.consts import EM, PAWN_COLOR, KING_COLOR, OPPONENT_COLOR, MAX_TURNS_NO_JUMP
 import time
 from collections import defaultdict
 
-##
-import copy
-from checkers.consts import *
-
-from checkers.moves import TOOL_CAPTURE_MOVES
-
-# ===============================================================================
+#===============================================================================
 # Globals
-# ===============================================================================
+#===============================================================================
 
 PAWN_WEIGHT = 1
 KING_WEIGHT = 1.5
 
-
-# ===============================================================================
+#===============================================================================
 # Player
-# ===============================================================================
+#===============================================================================
 
 class Player(abstract.AbstractPlayer):
     def __init__(self, setup_time, player_color, time_per_k_turns, k):
@@ -48,16 +42,16 @@ class Player(abstract.AbstractPlayer):
 
         # Choosing an arbitrary move in case Minimax does not return an answer:
         best_move = possible_moves[0]
-
+        
         # Initialize Minimax algorithm, still not running anything
-        minimax = MiniMaxWithAlphaBetaPruning(self.utility, self.color, self.no_more_time,
+        minimax = MiniMaxWithAlphaBetaPruning(self.utility, self.color, self.no_more_time, 
                                               self.selective_deepening_criterion)
 
         # Iterative deepening until the time runs out.
         while True:
-
+            
             print('going to depth: {}, remaining time: {}, prev_alpha: {}, best_move: {}'.format(
-                current_depth,
+                current_depth, 
                 self.time_for_current_move - (time.process_time() - self.clock),
                 prev_alpha,
                 best_move))
@@ -105,12 +99,12 @@ class Player(abstract.AbstractPlayer):
         for loc_val in state.board.values():
             if loc_val != EM:
                 piece_counts[loc_val] += 1
-
+        
         opponent_color = OPPONENT_COLOR[self.color]
-
-        my_u = ((PAWN_WEIGHT * piece_counts[PAWN_COLOR[self.color]]) +
+        
+        my_u = ((PAWN_WEIGHT * piece_counts[PAWN_COLOR[self.color]]) + 
                 (KING_WEIGHT * piece_counts[KING_COLOR[self.color]]))
-        op_u = ((PAWN_WEIGHT * piece_counts[PAWN_COLOR[opponent_color]]) +
+        op_u = ((PAWN_WEIGHT * piece_counts[PAWN_COLOR[opponent_color]]) + 
                 (KING_WEIGHT * piece_counts[KING_COLOR[opponent_color]]))
         if my_u == 0:
             # I have no tools left
@@ -118,49 +112,9 @@ class Player(abstract.AbstractPlayer):
         elif op_u == 0:
             # The opponent has no tools left
             return INFINITY
-
-        basic_heuristic = my_u - op_u
-
-        if self.color == BLACK_PLAYER:
-            id_dict = {BP : 1 , BK : 1 , RP : -1, RK : -1, EM : 0}
         else:
-            id_dict = {BP: -1, BK: -1, RP: 1, RK: 1, EM: 0}
-
-        safe_pawns_heuristic = 0
-        for i in range(BOARD_ROWS):
-            for j in range(BOARD_COLS):
-                if (i == 0 or j==0 or i==7 or j==7) and IS_BLACK_TILE((i, j)):
-                    safe_pawns_heuristic += id_dict[state.board[(i,j)]]
-
-
-        attack_heuristic = 0
-        for i in range(3):
-            for j in range(BOARD_COLS):
-                if IS_BLACK_TILE((i, j)) and state.board[(i,j)] == BP:
-                    attack_heuristic += id_dict[state.board[(i,j)]]
-
-        for i in range(3):
-            cur_i = BOARD_ROWS - i - 1
-            for j in range(BOARD_COLS):
-                if IS_BLACK_TILE((cur_i, j)) and state.board[(cur_i,j)] == RP:
-                    attack_heuristic += id_dict[state.board[(cur_i, j)]]
-
-        central_pawns_heuristic = 0
-        for i in range(BOARD_ROWS):
-            for j in range(BOARD_COLS):
-                if (i == 3 or i==4) and IS_BLACK_TILE((i, j)):
-                    central_pawns_heuristic += id_dict[state.board[(i,j)]]
-
-        central_kings_heuristic = 0
-        for i in range(BOARD_ROWS):
-            for j in range(BOARD_COLS):
-                if (i == 3 or i == 4) and IS_BLACK_TILE((i, j)):
-                    central_kings_heuristic += id_dict[state.board[(i, j)]]
-
-
-
-        return basic_heuristic + safe_pawns_heuristic + attack_heuristic + central_pawns_heuristic + central_kings_heuristic
-
+            return my_u - op_u
+        
     def selective_deepening_criterion(self, state):
         # Simple player does not selectively deepen into certain nodes.
         return False

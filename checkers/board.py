@@ -17,7 +17,7 @@ class GameState:
             for j in range(BOARD_COLS):
                 if IS_BLACK_TILE((i,j)):
                     self.board[(i,j)] = RP
-        
+
         for i in range(3):
             cur_i = BOARD_ROWS - i - 1
             for j in range(BOARD_COLS):
@@ -134,14 +134,14 @@ class GameState:
         
         # Updating the current player.
         self.curr_player = OPPONENT_COLOR[self.curr_player]
-        
+
     def draw_board(self):
-        print("  " + " ".join([str(i) for i in range(BOARD_COLS)]))
-        line_sep = " +" + "-+"*BOARD_COLS
+        print("   " + "   ".join([str(i) for i in range(BOARD_COLS)]))
+        line_sep = " +" + "---+" * BOARD_COLS
         print(line_sep)
         for i in range(BOARD_ROWS):
-            print(str(i) + "|" + "|".join([self.board[(i,j)]
-                                           for j in range(BOARD_COLS)]) + "|")
+            print(str(i) + "| " + " | ".join([self.board[(i, j)]
+                                              for j in range(BOARD_COLS)]) + " |")
             print(line_sep)
         print("\n" + self.curr_player + " Player Turn!\n\n")
 
