@@ -158,7 +158,24 @@ class Player(abstract.AbstractPlayer):
             for j in range(BOARD_COLS):
                 if (i == 3 or i == 4) and IS_BLACK_TILE((i, j)):
                     central_kings_heuristic += id_dict[state.board[(i, j)]]
-        return vars.a*basic_heuristic + vars.b*safe_pawns_heuristic + vars.c*attack_heuristic + vars.d*central_pawns_heuristic + vars.e*central_kings_heuristic
+
+        double_diagonal_heuristic = 0
+        for i in range(BOARD_ROWS):
+            for j in range(BOARD_COLS):
+                if (i+j == 8 or i+j == 6) and IS_BLACK_TILE((i, j)):
+                    double_diagonal_heuristic += id_dict[state.board[(i,j)]]
+
+        triangle_heuristic = 0
+        for i in range(BOARD_ROWS):
+            for j in range(BOARD_COLS):
+                if (j + 2 < BOARD_COLS and i + 1 < BOARD_ROWS) and IS_BLACK_TILE((i, j)):
+                    if state.board[(i, j)] in MY_COLORS[RED_PLAYER] and state.board[(i, j+2)] in MY_COLORS[RED_PLAYER] and state.board[(i+1, j+1)] in MY_COLORS[RED_PLAYER]:
+                        triangle_heuristic += id_dict[state.board[(i,j)]]
+                if (j + 2 < BOARD_COLS and i - 1 >= 0) and IS_BLACK_TILE((i, j)):
+                    if state.board[(i, j)] in MY_COLORS[BLACK_PLAYER] and state.board[(i, j + 2)] in MY_COLORS[BLACK_PLAYER] and state.board[(i - 1, j + 1)] in MY_COLORS[BLACK_PLAYER]:
+                        triangle_heuristic += id_dict[state.board[(i, j)]]
+
+        return vars.a*basic_heuristic + vars.b*safe_pawns_heuristic + vars.c*attack_heuristic + vars.d*central_pawns_heuristic + vars.e*central_kings_heuristic + double_diagonal_heuristic + triangle_heuristic
 
     def selective_deepening_criterion(self, state):
         # Simple player does not selectively deepen into certain nodes.
