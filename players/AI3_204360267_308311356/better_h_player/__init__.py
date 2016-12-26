@@ -18,6 +18,8 @@ from checkers.moves import TOOL_CAPTURE_MOVES
 # Globals
 # ===============================================================================
 
+import vars
+
 PAWN_WEIGHT = 1
 KING_WEIGHT = 1.5
 
@@ -156,10 +158,7 @@ class Player(abstract.AbstractPlayer):
             for j in range(BOARD_COLS):
                 if (i == 3 or i == 4) and IS_BLACK_TILE((i, j)):
                     central_kings_heuristic += id_dict[state.board[(i, j)]]
-
-
-
-        return basic_heuristic + safe_pawns_heuristic + attack_heuristic + central_pawns_heuristic + central_kings_heuristic
+        return vars.a*basic_heuristic + vars.b*safe_pawns_heuristic + vars.c*attack_heuristic + vars.d*central_pawns_heuristic + vars.e*central_kings_heuristic
 
     def selective_deepening_criterion(self, state):
         # Simple player does not selectively deepen into certain nodes.
