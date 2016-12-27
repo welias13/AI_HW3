@@ -11,3 +11,7 @@ global d
 d = 1
 global e
 e = 1
+global f
+f = 1
+global g
+g = 1

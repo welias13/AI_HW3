@@ -175,7 +175,7 @@ class Player(abstract.AbstractPlayer):
                     if state.board[(i, j)] in MY_COLORS[BLACK_PLAYER] and state.board[(i, j + 2)] in MY_COLORS[BLACK_PLAYER] and state.board[(i - 1, j + 1)] in MY_COLORS[BLACK_PLAYER]:
                         triangle_heuristic += id_dict[state.board[(i, j)]]
 
-        return vars.a*basic_heuristic + vars.b*safe_pawns_heuristic + vars.c*attack_heuristic + vars.d*central_pawns_heuristic + vars.e*central_kings_heuristic + double_diagonal_heuristic + triangle_heuristic
+        return vars.a*basic_heuristic + vars.b*safe_pawns_heuristic + vars.c*attack_heuristic + vars.d*central_pawns_heuristic + vars.e*central_kings_heuristic + vars.f*double_diagonal_heuristic + vars.g*triangle_heuristic
 
     def selective_deepening_criterion(self, state):
         # Simple player does not selectively deepen into certain nodes.
